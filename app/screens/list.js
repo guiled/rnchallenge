@@ -48,16 +48,17 @@ const List = ({ route, navigation }) => {
     }, []);
 
     // COMPONENTS
-    return <View>
+    return <View style={styles.mainContainer}>
         <FlatList
             refreshControl={
                 <RefreshControl
                     refreshing={refreshing}
                     onRefresh={() => loadRestaurantList(true)}
                 />}
-            //refreshing={refreshing}
+            refreshing={refreshing}
             onRefresh={() => loadRestaurantList(true)}
             style={styles.list}
+            contentContainerStyle={styles.list}
             ItemSeparatorComponent={ItemSeparator}
             keyExtractor={(item, index) => 'idx' + index}
             renderItem={renderItem}
@@ -67,7 +68,12 @@ const List = ({ route, navigation }) => {
 };
 
 const styles = StyleSheet.create({
-    list: {},
+    mainContainer: {
+        flex: 1
+    },
+    list: {
+        flex: 1
+    },
 
 });
 
