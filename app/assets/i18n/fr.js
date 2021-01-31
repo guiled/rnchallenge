@@ -1,3 +1,4 @@
 export default {
-    homeTitle: "Restaurants"
+    homeTitle: "Restaurants",
+    notConnected: "Impossible de joindre le serveur. Veuillez vérifier votre connexion."
 };

@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, RefreshControl } from 'react-native';
 import { FlatList } from 'react-native-gesture-handler';
 import I18n from '../utils/i18n';
 import ItemSeparator from '../components/List/ItemSeparator';
 import Item from '../components/List/Item';
-import mock from '../assets/mock';
+import Fetch from '../utils/Api';
 
 const List = ({ route, navigation }) => {
     // STATES
@@ -13,8 +13,20 @@ const List = ({ route, navigation }) => {
 
 
     // METHODS
-    const loadRestaurantList = () => {
-
+    const loadRestaurantList = (force = false) => {
+        setRefreshing(true);
+        Fetch({
+            query: "query activities($market: String!, $types: [String]) { activities(market: $market, types: $types) {... on Activity {id name shortDescription heroMedia {...media} squareMedia {...media}}}}fragment media on Media {  url  alt}",
+            variables: {
+                market: "fr-fr",
+                types: ["Restaurant"]
+            },
+            operationName: "activities"
+        }).then((response) => {
+            if (response && response.data && response.data.activities) {
+                setRestaurantData(response.data.activities);
+            }
+        }).finally(() => setRefreshing(false));
     };
 
     const openDetails = (item) => {
@@ -32,18 +44,20 @@ const List = ({ route, navigation }) => {
     React.useEffect(() => {
         // Update the screen title
         navigation.setOptions({ title: I18n.t('homeTitle') });
+        loadRestaurantList();
     }, []);
-
-    setTimeout(() => {
-        setRestaurantData(mock.data.activities);
-    }, 1);
 
     // COMPONENTS
     return <View>
         <FlatList
+            refreshControl={
+                <RefreshControl
+                    refreshing={refreshing}
+                    onRefresh={() => loadRestaurantList(true)}
+                />}
+            //refreshing={refreshing}
+            onRefresh={() => loadRestaurantList(true)}
             style={styles.list}
-            refreshing={refreshing}
-            onRefresh={loadRestaurantList}
             ItemSeparatorComponent={ItemSeparator}
             keyExtractor={(item, index) => 'idx' + index}
             renderItem={renderItem}

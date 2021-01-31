@@ -24,15 +24,15 @@ const styles = StyleSheet.create({
     itemContainer: {
         flex: 1,
         height: itemHeight,
-        padding: 10,
         flexDirection: "row",
+        padding: itemPadding,
+        alignItems: "center"
     },
     thumbnail: {
         left: 0,
         top: 0,
         width: itemHeight - 2 * itemPadding,
         height: itemHeight - 2 * itemPadding,
-        borderWidth: 10,
         borderRadius: 20,
     },
     name: {
