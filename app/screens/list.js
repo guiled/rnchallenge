@@ -3,7 +3,8 @@ import { View, StyleSheet, FlatList, TextInput } from 'react-native';
 import I18n from '../utils/i18n';
 import ItemSeparator from '../components/List/ItemSeparator';
 import Item from '../components/List/Item';
-import Fetch from '../utils/Api';
+import { Fetch, GetRestaurantQuery } from '../utils/Api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const RenderHeader = ({ text, onChangeText }) => <View style={styles.searchBar}>
     <TextInput
@@ -25,21 +26,28 @@ const List = ({ route, navigation }) => {
     const [filter, setFilter] = useState('');
 
     // METHODS
-    const loadRestaurantList = (force = false) => {
+    async function loadRestaurantList(force = false) {
+        let data = null;
         setRefreshing(true);
-        Fetch({
-            query: "query activities($market: String!, $types: [String]) { activities(market: $market, types: $types) {... on Activity {id name shortDescription heroMedia {...media} squareMedia {...media}}}}fragment media on Media {  url  alt}",
-            variables: {
-                market: "fr-fr",
-                types: ["Restaurant"]
-            },
-            operationName: "activities"
-        }).then((response) => {
-            if (response && response.data) {
-                allRestaurants = response.data.activities
-                filterRestaurants();
+
+        if (!force) {
+            let response = await AsyncStorage.getItem('restaurants');
+            if (response !== null) {
+                data = JSON.parse(response);
             }
-        }).finally(() => setRefreshing(false));
+        }
+
+        if (!data) {
+            console.log('Fetch from server');
+            response = await Fetch(GetRestaurantQuery);
+            if (response && response.data) {
+                data = response.data.activities;
+            }
+        }
+        allRestaurants = data;
+        filterRestaurants();
+        await AsyncStorage.setItem('restaurants', JSON.stringify(allRestaurants));
+        setRefreshing(false);
     };
 
     const openDetails = (item) => {
