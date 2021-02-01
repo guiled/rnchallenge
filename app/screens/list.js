@@ -1,16 +1,28 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, RefreshControl } from 'react-native';
-import { FlatList } from 'react-native-gesture-handler';
+import { View, StyleSheet, FlatList, TextInput } from 'react-native';
 import I18n from '../utils/i18n';
 import ItemSeparator from '../components/List/ItemSeparator';
 import Item from '../components/List/Item';
 import Fetch from '../utils/Api';
 
+const RenderHeader = ({ text, onChangeText }) => <View style={styles.searchBar}>
+    <TextInput
+        autoCapitalize="none"
+        autoCorrect={false}
+        onChangeText={onChangeText}
+        value={text}
+        placeholder={I18n.t('search')}
+    />
+
+</View>;
+
+let allRestaurants = [];
+
 const List = ({ route, navigation }) => {
     // STATES
     const [refreshing, setRefreshing] = useState(false);
     const [restaurantData, setRestaurantData] = useState([]);
-
+    const [filter, setFilter] = useState('');
 
     // METHODS
     const loadRestaurantList = (force = false) => {
@@ -23,8 +35,9 @@ const List = ({ route, navigation }) => {
             },
             operationName: "activities"
         }).then((response) => {
-            if (response && response.data && response.data.activities) {
-                setRestaurantData(response.data.activities);
+            if (response && response.data) {
+                allRestaurants = response.data.activities
+                filterRestaurants();
             }
         }).finally(() => setRefreshing(false));
     };
@@ -40,6 +53,21 @@ const List = ({ route, navigation }) => {
         />;
     };
 
+    const filterRestaurants = (val) => {
+        let result = allRestaurants;
+        if (val && allRestaurants && allRestaurants.filter) {
+            result = allRestaurants.filter((item) => item.name.toLowerCase().includes(val.toLowerCase()));
+        }
+        console.log('Result : ' + result.length);
+        setRestaurantData(result);
+    };
+
+    const setFilterText = (val) => {
+        setFilter(val);
+        filterRestaurants(val);
+    };
+
+
     // EFFECTS
     React.useEffect(() => {
         // Update the screen title
@@ -49,16 +77,10 @@ const List = ({ route, navigation }) => {
 
     // COMPONENTS
     return <View style={styles.mainContainer}>
+        <RenderHeader text={filter} onChangeText={setFilterText} />
         <FlatList
-            refreshControl={
-                <RefreshControl
-                    refreshing={refreshing}
-                    onRefresh={() => loadRestaurantList(true)}
-                />}
             refreshing={refreshing}
             onRefresh={() => loadRestaurantList(true)}
-            style={styles.list}
-            contentContainerStyle={styles.list}
             ItemSeparatorComponent={ItemSeparator}
             keyExtractor={(item, index) => 'idx' + index}
             renderItem={renderItem}
@@ -71,10 +93,16 @@ const styles = StyleSheet.create({
     mainContainer: {
         flex: 1
     },
-    list: {
-        flex: 1
+    searchBar: {
+        height: 50,
+        padding: 5,
+        flexDirection: "row"
     },
+    searchText: {
+        height: 40,
+        marginLeft: 20
 
+    }
 });
 
 export default List;

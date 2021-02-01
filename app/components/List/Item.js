@@ -22,7 +22,6 @@ const itemPadding = 10;
 
 const styles = StyleSheet.create({
     itemContainer: {
-        flex: 1,
         height: itemHeight,
         flexDirection: "row",
         padding: itemPadding,
