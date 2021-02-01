@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, StyleSheet, FlatList, TextInput } from 'react-native';
 import I18n from '../utils/i18n';
 import ItemSeparator from '../components/List/ItemSeparator';
 import Item from '../components/List/Item';
 import { Fetch, GetRestaurantQuery } from '../utils/Api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import debounce from 'lodash.debounce';
 
 const RenderHeader = ({ text, onChangeText }) => <View style={styles.searchBar}>
     <TextInput
@@ -28,11 +29,13 @@ const List = ({ route, navigation }) => {
     // METHODS
     async function loadRestaurantList(force = false) {
         let data = null;
+        let fromStorage = false;
         setRefreshing(true);
 
         if (!force) {
             let response = await AsyncStorage.getItem('restaurants');
             if (response !== null) {
+                fromStorage = true;
                 data = JSON.parse(response);
             }
         }
@@ -44,9 +47,20 @@ const List = ({ route, navigation }) => {
                 data = response.data.activities;
             }
         }
-        allRestaurants = data;
+        data.map(item => {
+
+        })
+        // Prepare data to be easily and quickly searched
+        allRestaurants = data.map(item => {
+            return {
+                ...item,
+                searchField: item.name.toLowerCase() + ' ' + item.shortDescription.toLowerCase()
+            }
+        });
         filterRestaurants();
-        await AsyncStorage.setItem('restaurants', JSON.stringify(allRestaurants));
+        if (!fromStorage) {
+            await AsyncStorage.setItem('restaurants', JSON.stringify(allRestaurants));
+        }
         setRefreshing(false);
     };
 
@@ -61,14 +75,15 @@ const List = ({ route, navigation }) => {
         />;
     };
 
-    const filterRestaurants = (val) => {
+    const filterRestaurants = useCallback(debounce(val => {
         let result = allRestaurants;
         if (val && allRestaurants && allRestaurants.filter) {
-            result = allRestaurants.filter((item) => item.name.toLowerCase().includes(val.toLowerCase()));
+            const needle = val.toLowerCase();
+            result = allRestaurants.filter((item) => item.searchField.includes(needle));
         }
         console.log('Result : ' + result.length);
         setRestaurantData(result);
-    };
+    }, 200), []);
 
     const setFilterText = (val) => {
         setFilter(val);
